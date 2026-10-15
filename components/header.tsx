@@ -16,12 +16,12 @@ import { useBag, useWishlist } from "@/components/store";
 import { isNavCurrent, navigation, type NavItem } from "@/lib/navigation";
 import { site } from "@/lib/site";
 
-export function Header() {
+export function Header({ items = navigation }: { items?: NavItem[] }) {
   const pathname = usePathname();
-  return <HeaderBar key={pathname} />;
+  return <HeaderBar key={pathname} items={items} />;
 }
 
-function HeaderBar() {
+function HeaderBar({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
   const bag = useBag();
   const wishlist = useWishlist();
@@ -68,7 +68,7 @@ function HeaderBar() {
 
           <nav aria-label="Primary" className="ml-14 hidden lg:block">
             <ul className="flex items-center gap-5">
-              {navigation.map((item) => {
+              {items.map((item) => {
                 const open = menu === item.label;
                 const current = isNavCurrent(item.href, pathname);
                 return (
@@ -147,7 +147,7 @@ function HeaderBar() {
       </header>
 
       {active ? <MegaMenu item={active} onNavigate={() => setMenu(null)} /> : null}
-      <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <MobileNav open={mobileOpen} items={items} onClose={() => setMobileOpen(false)} />
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
@@ -205,7 +205,7 @@ function MegaMenu({ item, onNavigate }: { item: NavItem; onNavigate: () => void 
   );
 }
 
-function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+function MobileNav({ open, items, onClose }: { open: boolean; items: NavItem[]; onClose: () => void }) {
   const pathname = usePathname();
   const [section, setSection] = useState<string | null>(navigation[0]?.label ?? null);
   const ref = useRef<HTMLDivElement>(null);
@@ -283,7 +283,7 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>
         <nav aria-label="Mobile" className="flex-1 overflow-y-auto px-4 py-4">
           <ul>
-            {navigation.map((item) => {
+            {items.map((item) => {
               const expanded = section === item.label;
               const panelId = `mobile-${item.label.replace(/\s+/g, "-").toLowerCase()}`;
               return (

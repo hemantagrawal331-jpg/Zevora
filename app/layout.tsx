@@ -3,7 +3,8 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import { Suspense } from "react";
 import { AnnouncementBar } from "@/components/announcement-bar";
 import { Footer } from "@/components/footer";
-import { Header, HeaderFallback } from "@/components/header";
+import { StoreHeader } from "@/components/store-header";
+import { HeaderFallback } from "@/components/header";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -41,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="sticky top-0 z-40">
           <AnnouncementBar />
           <Suspense fallback={<HeaderFallback />}>
-            <Header />
+            <StoreHeader />
           </Suspense>
         </div>
         <main id="main" className="flex-1">

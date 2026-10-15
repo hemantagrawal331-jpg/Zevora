@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import { ScopedCatalog } from "@/components/scoped-catalog";
-import { getBestsellers } from "@/lib/catalog";
+import { CatalogueBoundary } from "@/components/catalogue-boundary";
 
 export const metadata: Metadata = {
   title: "Bestsellers",
-  description: "The pieces most often kept from the ZEVORA edit.",
+  description: "The most requested pieces from ZEVORA.",
 };
 
 export default function BestsellersPage() {
   return (
-    <ScopedCatalog
-      eyebrow="Most kept"
+    <CatalogueBoundary
+      eyebrow="Most requested"
       title="Bestsellers"
-      description="Pieces marked as bestsellers in the demo catalogue."
-      products={getBestsellers()}
+      description="Pieces customers return to."
+      filter="bestsellers"
     />
   );
 }

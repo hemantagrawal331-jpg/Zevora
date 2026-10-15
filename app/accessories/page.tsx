@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { ScopedCatalog } from "@/components/scoped-catalog";
+import { CatalogueBoundary } from "@/components/catalogue-boundary";
 import { getCategory } from "@/lib/categories";
-import { getByCategory } from "@/lib/catalog";
 
 const category = getCategory("accessories");
 
@@ -12,11 +11,11 @@ export const metadata: Metadata = {
 
 export default function AccessoriesPage() {
   return (
-    <ScopedCatalog
+    <CatalogueBoundary
       eyebrow="Accessories"
       title="Accessories"
       description={category?.description}
-      products={getByCategory("accessories")}
+      category="accessories"
     />
   );
 }

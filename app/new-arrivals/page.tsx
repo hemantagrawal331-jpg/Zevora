@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { ScopedCatalog } from "@/components/scoped-catalog";
-import { getNewArrivals } from "@/lib/catalog";
+import { CatalogueBoundary } from "@/components/catalogue-boundary";
 
 export const metadata: Metadata = {
   title: "New Arrivals",
@@ -9,11 +8,11 @@ export const metadata: Metadata = {
 
 export default function NewArrivalsPage() {
   return (
-    <ScopedCatalog
+    <CatalogueBoundary
       eyebrow="Just in"
       title="New arrivals"
       description="The latest denim, sweats, tailoring, and accessories."
-      products={getNewArrivals()}
+      filter="new"
     />
   );
 }

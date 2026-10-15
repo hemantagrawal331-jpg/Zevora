@@ -7,8 +7,9 @@ import { FashionImage } from "@/components/fashion-image";
 import { HeartIcon } from "@/components/icons";
 import { Price } from "@/components/price";
 import { addToBag, useWishlist } from "@/components/store";
+import { toggleWishlistAction } from "@/lib/commerce/actions";
 import { checkDeliveryPin, type DeliveryQuote } from "@/lib/delivery";
-import { imagesFor, photographedColor, sizeStock, type Product } from "@/lib/products";
+import { findVariant, imagesFor, photographedColor, sizeStock, type Product } from "@/lib/products";
 
 export function ProductDetail({ product }: { product: Product }) {
   const router = useRouter();
@@ -25,8 +26,11 @@ export function ProductDetail({ product }: { product: Product }) {
   const gallery = imagesFor(product, color);
   const [activeImage, setActiveImage] = useState(0);
   const shown = gallery[Math.min(activeImage, gallery.length - 1)] ?? gallery[0];
-  const stock = sizeStock(product, size);
+  const stock = sizeStock(product, size, color);
   const anyStock = product.sizes.some((item) => item.stockQuantity > 0);
+  const variant = findVariant(product, size, color);
+  const displayPrice = variant?.priceInPaise ?? product.priceInPaise;
+  const displayCompare = variant ? variant.compareAtPriceInPaise : product.compareAtPriceInPaise;
   const photoColor = photographedColor(product);
   const quantityOptions = stock > 0 ? Array.from({ length: Math.min(5, stock) }, (_, index) => index + 1) : [1];
 
@@ -49,7 +53,7 @@ export function ProductDetail({ product }: { product: Product }) {
       setNotice("");
       return false;
     }
-    const result = addToBag({ productId: product.id, color, size, quantity });
+    const result = addToBag({ product, color, size, quantity });
     if (!result.ok) {
       setError(result.message);
       setNotice("");
@@ -90,7 +94,7 @@ export function ProductDetail({ product }: { product: Product }) {
         <div className="lg:sticky lg:top-32 lg:py-4">
           <p className="text-[11px] tracking-[0.18em] text-stone uppercase">{product.sku}</p>
           <h1 className="mt-3 font-display text-5xl leading-none md:text-6xl">{product.name}</h1>
-          <Price priceInPaise={product.priceInPaise} compareAtPriceInPaise={product.compareAtPriceInPaise} className="mt-6 text-base" />
+          <Price priceInPaise={displayPrice} compareAtPriceInPaise={displayCompare} className="mt-6 text-base" />
           <p className="mt-3 text-sm text-charcoal">
             {!anyStock
               ? "Out of stock"
@@ -195,7 +199,10 @@ export function ProductDetail({ product }: { product: Product }) {
               type="button"
               aria-pressed={wished}
               aria-label={wished ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-              onClick={() => wishlist.toggleWishlist(product.id)}
+              onClick={() => {
+                wishlist.toggleWishlist(product.id);
+                if (!product.demo) void toggleWishlistAction(product.id);
+              }}
               className="flex h-12 w-12 items-center justify-center border border-ink"
             >
               <HeartIcon filled={wished} className="h-4 w-4" />

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { ScopedCatalog } from "@/components/scoped-catalog";
-import { getSaleProducts } from "@/lib/catalog";
+import { CatalogueBoundary } from "@/components/catalogue-boundary";
 
 export const metadata: Metadata = {
   title: "Sale",
@@ -9,11 +8,11 @@ export const metadata: Metadata = {
 
 export default function SalePage() {
   return (
-    <ScopedCatalog
+    <CatalogueBoundary
       eyebrow="Reduced"
       title="Sale"
-      description="Pieces with a lower current price than the original price."
-      products={getSaleProducts()}
+      description="Pieces with a comparison price higher than the current price."
+      filter="sale"
     />
   );
 }

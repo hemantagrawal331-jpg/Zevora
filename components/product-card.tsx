@@ -6,6 +6,7 @@ import { FashionImage } from "@/components/fashion-image";
 import { HeartIcon } from "@/components/icons";
 import { Price } from "@/components/price";
 import { addToBag, useWishlist } from "@/components/store";
+import { toggleWishlistAction } from "@/lib/commerce/actions";
 import { mainImage, productLabel, totalStock, type Product } from "@/lib/products";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -17,7 +18,7 @@ export function ProductCard({ product }: { product: Product }) {
   const stock = totalStock(product);
 
   function add(size: string) {
-    const result = addToBag({ productId: product.id, color, size, quantity: 1 });
+    const result = addToBag({ product, color, size, quantity: 1 });
     setNotice(result.ok ? `${product.name} added to bag` : result.message);
     window.setTimeout(() => setNotice(""), 1600);
   }
@@ -40,7 +41,10 @@ export function ProductCard({ product }: { product: Product }) {
           type="button"
           aria-pressed={wished}
           aria-label={wished ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-          onClick={() => wishlist.toggleWishlist(product.id)}
+          onClick={() => {
+            wishlist.toggleWishlist(product.id);
+            if (!product.demo) void toggleWishlistAction(product.id);
+          }}
           className="absolute top-2 right-2 flex h-9 w-9 items-center justify-center bg-ivory/90 text-ink hover:bg-ivory"
         >
           <HeartIcon filled={wished} className="h-4 w-4" />

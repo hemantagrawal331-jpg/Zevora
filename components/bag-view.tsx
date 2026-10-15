@@ -1,23 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import { useActionState, useEffect } from "react";
 import { Container } from "@/components/container";
 import { FashionImage } from "@/components/fashion-image";
 import { removeFromBag, setBagQuantity, useBag } from "@/components/store";
+import { placeOrderAction, syncCartAction } from "@/lib/commerce/actions";
 import { getProductById } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { mainImage, sizeStock } from "@/lib/products";
 
-export function BagView() {
+export function BagView({
+  signedIn = false,
+  addresses = [],
+}: {
+  signedIn?: boolean;
+  addresses?: { id: string; label: string }[];
+}) {
   const bag = useBag();
+  const [orderState, placeOrder, placing] = useActionState(placeOrderAction, {});
   const rows = bag.lines.map((line) => ({
     line,
     product: getProductById(line.productId),
   }));
   const subtotal = rows.reduce((total, row) => {
-    if (!row.product) return total;
-    return total + row.product.priceInPaise * row.line.quantity;
+    const price = row.product?.priceInPaise ?? row.line.priceInPaise ?? 0;
+    return total + price * row.line.quantity;
   }, 0);
+  const orderable = rows.length > 0 && rows.every((row) => row.line.variantId);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    const items = bag.lines.flatMap((line) =>
+      line.variantId ? [{ variantId: line.variantId, quantity: line.quantity }] : [],
+    );
+    void syncCartAction(items);
+  }, [signedIn, bag.lines]);
 
   return (
     <Container className="py-10 md:py-14">
@@ -40,34 +58,40 @@ export function BagView() {
           <ul className="divide-y divide-line border-y border-line">
             {rows.map(({ line, product }) => {
               const image = product ? mainImage(product, line.color) : null;
-              const stock = product && line.size ? sizeStock(product, line.size) : 0;
+              const stock = product && line.size ? sizeStock(product, line.size, line.color) : (line.stockHint ?? line.quantity);
+              const price = product?.priceInPaise ?? line.priceInPaise ?? 0;
+              const name = product?.name ?? line.name;
               const quantities = Array.from(
-                { length: Math.max(line.quantity, Math.min(5, stock)) },
+                { length: Math.max(line.quantity, Math.min(5, stock || line.quantity)) },
                 (_, index) => index + 1,
               );
               return (
               <li key={`${line.productId}-${line.color}-${line.size ?? "one"}`} className="flex gap-4 py-6">
                 <div className="relative h-36 w-28 shrink-0 bg-sand">
-                  {image ? (
+                  {image || line.imageSrc ? (
                     <FashionImage
-                      src={image.src}
-                      alt={image.alt}
-                      fit={image.fit}
+                      src={image?.src || line.imageSrc || ""}
+                      alt={image?.alt || line.imageAlt || name || "Product"}
+                      fit={image?.fit}
                       sizes="112px"
                     />
                   ) : null}
                 </div>
                 <div className="flex flex-1 flex-col">
-                  {product ? (
+                  {name ? (
                     <>
-                      <Link href={`/product/${product.slug}`} className="text-sm hover:underline">
-                        {product.name}
-                      </Link>
+                      {product ? (
+                        <Link href={`/product/${product.slug}`} className="text-sm hover:underline">
+                          {name}
+                        </Link>
+                      ) : (
+                        <p className="text-sm">{name}</p>
+                      )}
                       <p className="mt-1 text-xs text-stone">
                         {line.color}
                         {line.size ? ` · Size ${line.size}` : ""}
                       </p>
-                      <p className="mt-2 text-sm">{formatPrice(product.priceInPaise)}</p>
+                      <p className="mt-2 text-sm">{formatPrice(price)}</p>
                     </>
                   ) : (
                     <p className="text-sm">This piece is no longer in the edit.</p>
@@ -76,7 +100,7 @@ export function BagView() {
                     <label className="text-[11px] tracking-[0.14em] uppercase">
                       Qty
                       <select
-                        aria-label={`Quantity for ${product?.name ?? "item"}`}
+                        aria-label={`Quantity for ${name ?? "item"}`}
                         value={line.quantity}
                         onChange={(event) =>
                           setBagQuantity(
@@ -115,17 +139,31 @@ export function BagView() {
               <span>{formatPrice(subtotal)}</span>
             </div>
             <p className="mt-4 text-xs leading-5 text-stone">
-              Shipping is calculated when checkout exists. Complimentary shipping is noted above ₹5,000.
+              Complimentary shipping applies above ₹5,000 once an order is placed. Payment is not taken here.
             </p>
-            <button
-              type="button"
-              disabled
-              className="mt-6 h-12 w-full cursor-not-allowed border border-line text-[11px] tracking-[0.16em] text-stone uppercase"
-            >
-              Checkout is not available
-            </button>
-            <p className="mt-3 text-xs leading-5 text-stone">
-              Payments are not connected. This bag is saved in your browser only.
+            {orderable && signedIn ? (
+              <form action={placeOrder} className="mt-6 space-y-3">
+                <input type="hidden" name="items" value={JSON.stringify(rows.map((row) => ({ variantId: row.line.variantId, quantity: row.line.quantity })))} />
+                <label className="block text-[11px] tracking-[0.14em] uppercase">
+                  Address
+                  <select name="addressId" className="mt-2 w-full border border-line bg-transparent px-3 py-2 text-sm" required>
+                    {addresses.map((address) => (
+                      <option key={address.id} value={address.id}>{address.label}</option>
+                    ))}
+                  </select>
+                </label>
+                {addresses.length === 0 ? <p className="text-sm">Save an address in your account before placing an order.</p> : null}
+                <button type="submit" disabled={placing || addresses.length === 0} className="h-12 w-full bg-ink text-[11px] tracking-[0.16em] text-ivory uppercase disabled:bg-stone">
+                  {placing ? "Placing order" : "Place order"}
+                </button>
+              </form>
+            ) : (
+              <button type="button" disabled className="mt-6 h-12 w-full cursor-not-allowed border border-line text-[11px] tracking-[0.16em] text-stone uppercase">
+                Checkout is not available
+              </button>
+            )}
+            <p className="mt-3 text-xs leading-5 text-stone" role="status">
+              {orderState.error || orderState.message || "Payments are not connected. A placed order stays pending until a verified payment event arrives."}
             </p>
           </aside>
         </div>

@@ -142,7 +142,7 @@ export function BrandStory() {
   );
 }
 
-export function EditorialLook() {
+export function EditorialLook({ href = "/product/belted-camel-coat" }: { href?: string }) {
   return (
     <section className="relative min-h-[70vh] bg-sand" aria-label="Shop the look">
       <div className="relative h-[70vh]">
@@ -159,7 +159,7 @@ export function EditorialLook() {
           Belted, and left at that
         </p>
         <Link
-          href="/product/belted-camel-coat"
+          href={href}
           className="mt-6 inline-flex h-11 items-center bg-ink px-6 text-[11px] tracking-[0.18em] text-ivory uppercase hover:bg-charcoal"
         >
           Shop the look

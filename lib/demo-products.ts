@@ -74,6 +74,7 @@ function build(spec: Spec): Product {
     ],
     sizes,
     colors,
+    variants: [],
     sku,
     stockQuantity: sizes.reduce((total, size) => total + size.stockQuantity, 0),
     tags: [...new Set([category?.label ?? spec.category, label, ...(spec.tags ?? [])])],

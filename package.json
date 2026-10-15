@@ -8,11 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/admin/password.test.ts lib/admin/session.test.ts lib/sourcing/sourcing.test.ts lib/catalog.test.ts",
+    "test": "tsx --test lib/admin/password.test.ts lib/admin/session.test.ts lib/sourcing/sourcing.test.ts lib/catalog.test.ts lib/commerce/commerce.test.ts",
     "admin:hash": "tsx scripts/hash-admin-password.ts",
     "db:migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3",
     "next": "16.4.1",
     "postgres": "^3.4.9",
     "react": "19.3.0",

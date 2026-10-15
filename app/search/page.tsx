@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { ScopedCatalog } from "@/components/scoped-catalog";
-import { activeProducts } from "@/lib/catalog";
+import { CatalogueBoundary } from "@/components/catalogue-boundary";
 
 export const metadata: Metadata = {
   title: "Search",
@@ -9,11 +8,10 @@ export const metadata: Metadata = {
 
 export default function SearchPage() {
   return (
-    <ScopedCatalog
+    <CatalogueBoundary
       eyebrow="Search"
       title="Search the collection"
       description="Search by product name, category, or a word such as denim, hoodie, or bag."
-      products={activeProducts()}
       requireQuery
     />
   );

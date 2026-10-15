@@ -1,5 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import postgres from "postgres";
+import { splitSql } from "../lib/sql/split";
 
 const url = process.env.DATABASE_URL?.trim();
 if (!url) {
@@ -8,19 +9,40 @@ if (!url) {
 }
 
 const sql = postgres(url, { max: 1 });
+const directory = new URL("../db/migrations/", import.meta.url);
 
 try {
-  const file = await readFile(new URL("../db/migrations/001_sourcing_records.sql", import.meta.url), "utf8");
-  const statements = file
-    .split(";")
-    .map((statement) => statement.trim())
-    .filter(Boolean);
-  for (const statement of statements) {
-    await sql.unsafe(statement);
+  await sql`create table if not exists schema_migrations (
+    filename text primary key,
+    applied_at timestamptz not null default now()
+  )`;
+  const files = (await readdir(directory)).filter((file) => file.endsWith(".sql")).sort();
+  const appliedRows = await sql<{ filename: string }[]>`select filename from schema_migrations`;
+  const applied = new Set(appliedRows.map((row) => row.filename));
+  const authRows = await sql<{ exists: boolean }[]>`
+    select exists(select 1 from information_schema.schemata where schema_name = 'auth') as exists
+  `;
+  const hasAuth = Boolean(authRows[0]?.exists);
+
+  for (const file of files) {
+    if (applied.has(file)) continue;
+    if (file.startsWith("002") && !hasAuth) {
+      console.error(
+        `${file} was not applied. This database has no Supabase auth schema. Run it in the Supabase SQL editor.`,
+      );
+      process.exitCode = 1;
+      continue;
+    }
+    const source = await readFile(new URL(file, directory), "utf8");
+    for (const statement of splitSql(source)) {
+      await sql.unsafe(statement);
+    }
+    await sql`insert into schema_migrations (filename) values (${file})`;
+    console.log(`Applied ${file}`);
   }
-  console.log("Applied 001_sourcing_records.sql");
 } catch (error) {
-  console.error("Migration failed.", error instanceof Error ? error.name : "unknown");
+  const message = error instanceof Error ? error.message : "unknown";
+  console.error("Migration failed.", message.replace(url, "[redacted]"));
   process.exitCode = 1;
 } finally {
   await sql.end();

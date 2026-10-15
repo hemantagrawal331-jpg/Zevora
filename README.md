@@ -23,4 +23,4 @@ npm run typecheck
 npm run build
 ```
 
-Bag, wishlist, newsletter, and the contact form are stored in the browser only. Payments, accounts, and email are not connected.
+Bag and wishlist pieces saved in the browser stay on this device. When Supabase is configured, signed-in customers also have an account wishlist, addresses, and orders. See [docs/supabase-setup.md](docs/supabase-setup.md). Payments are not captured until a webhook secret and provider are configured. Until then the shop uses the sample catalogue if the Supabase URL and anon key are absent.

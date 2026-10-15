@@ -3,13 +3,20 @@
 import { useSyncExternalStore } from "react";
 import { decideBagQuantity } from "@/lib/bag-rules";
 import { getProductById } from "@/lib/catalog";
-import { sizeStock } from "@/lib/products";
+import { findVariant, mainImage, sizeStock, type Product } from "@/lib/products";
 
 export type BagLine = {
   productId: string;
+  variantId: string | null;
   color: string;
   size: string | null;
   quantity: number;
+  name?: string;
+  priceInPaise?: number;
+  imageSrc?: string;
+  imageAlt?: string;
+  sku?: string;
+  stockHint?: number;
 };
 
 const BAG_KEY = "zevora-bag";
@@ -33,6 +40,7 @@ function isLine(value: unknown): value is BagLine {
     typeof line.productId === "string" &&
     typeof line.color === "string" &&
     (line.size === null || typeof line.size === "string") &&
+    (line.variantId === undefined || line.variantId === null || typeof line.variantId === "string") &&
     typeof line.quantity === "number" &&
     line.quantity > 0
   );
@@ -44,6 +52,7 @@ function parseBag(raw: string): BagLine[] {
     if (!Array.isArray(data)) return EMPTY_LINES;
     const lines = data.filter(isLine).map((line) => ({
       ...line,
+      variantId: line.variantId ?? null,
       quantity: Math.min(MAX_QTY, Math.floor(line.quantity)),
     }));
     return lines.length > 0 ? lines : EMPTY_LINES;
@@ -128,36 +137,48 @@ const subscribeWish = subscribe(WISH_KEY, wishListeners, () => {
 });
 
 export function addToBag(input: {
-  productId: string;
+  product: Product;
   color: string;
   size: string | null;
   quantity?: number;
 }) {
-  const product = getProductById(input.productId);
-  if (!product) return { ok: false as const, message: "This piece is not available." };
-  if (!input.size || !product.sizes.some((size) => size.label === input.size)) {
+  const product = input.product;
+  if (!product.isActive) return { ok: false as const, message: "This piece is not available." };
+  const variant = findVariant(product, input.size, input.color);
+  if (product.variants.length > 0 && !variant) {
+    return { ok: false as const, message: "Select an available size and colour." };
+  }
+  if (!input.size || (product.variants.length === 0 && !product.sizes.some((size) => size.label === input.size))) {
     return { ok: false as const, message: "Select an available size." };
   }
   const lines = readBag().map((line) => ({ ...line }));
   const index = lines.findIndex(
     (line) =>
-      line.productId === input.productId &&
+      line.productId === product.id &&
       line.color === input.color &&
       line.size === input.size,
   );
   const already = index >= 0 ? lines[index].quantity : 0;
   const decision = decideBagQuantity({
-    stock: sizeStock(product, input.size),
+    stock: sizeStock(product, input.size, input.color),
     already,
     requested: input.quantity ?? 1,
     maxPerLine: MAX_QTY,
   });
   if (!decision.ok) return decision;
-  const next = {
-    productId: input.productId,
+  const image = mainImage(product, input.color);
+  const next: BagLine = {
+    productId: product.id,
+    variantId: variant?.id ?? null,
     color: input.color,
     size: input.size,
     quantity: decision.quantity,
+    name: product.name,
+    priceInPaise: variant?.priceInPaise ?? product.priceInPaise,
+    imageSrc: image?.src ?? "",
+    imageAlt: image?.alt ?? product.name,
+    sku: variant?.sku ?? product.sku,
+    stockHint: sizeStock(product, input.size, input.color),
   };
   if (index >= 0) lines[index] = next;
   else lines.push(next);
@@ -172,7 +193,8 @@ export function setBagQuantity(
   quantity: number,
 ) {
   const product = getProductById(productId);
-  const stock = product && size ? sizeStock(product, size) : 0;
+  const line = readBag().find((item) => item.productId === productId && item.color === color && item.size === size);
+  const stock = product && size ? sizeStock(product, size, color) : (line?.stockHint ?? 0);
   const lines = readBag().flatMap((line) => {
     const matches =
       line.productId === productId && line.color === color && line.size === size;

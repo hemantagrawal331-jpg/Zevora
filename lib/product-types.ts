@@ -11,6 +11,16 @@ export type ProductSize = {
   stockQuantity: number;
 };
 
+export type ProductVariant = {
+  id: string;
+  size: string;
+  color: string;
+  sku: string;
+  stockQuantity: number;
+  priceInPaise: number;
+  compareAtPriceInPaise?: number;
+};
+
 export type CatalogImage = {
   src: string;
   alt: string;
@@ -31,6 +41,7 @@ export type Product = {
   images: CatalogImage[];
   sizes: ProductSize[];
   colors: ProductColor[];
+  variants: ProductVariant[];
   sku: string;
   stockQuantity: number;
   tags: string[];
@@ -42,5 +53,5 @@ export type Product = {
   isActive: boolean;
   popularity: number;
   createdAt: string;
-  demo: true;
+  demo: boolean;
 };
