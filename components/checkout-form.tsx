@@ -6,6 +6,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Container } from "@/components/container";
 import { OrderTotals } from "@/components/order-totals";
 import { currentBagLines, replaceBag, useBag } from "@/components/store";
+import { openRazorpayCheckout } from "@/components/razorpay-checkout";
 import { createCheckoutOrderAction, previewCouponAction } from "@/lib/commerce/checkout-actions";
 import { indianStates } from "@/lib/commerce/checkout-input";
 import { quoteCheckout, type CheckoutQuote } from "@/lib/commerce/quote";
@@ -28,11 +29,13 @@ export function CheckoutForm({
   profile,
   addresses,
   razorpayReady,
+  testMode,
   canOrder,
 }: {
   profile: { fullName: string; email: string } | null;
   addresses: CheckoutAddress[];
   razorpayReady: boolean;
+  testMode: boolean;
   canOrder: boolean;
 }) {
   const bag = useBag();
@@ -112,6 +115,19 @@ export function CheckoutForm({
     const ordered = new Set(catalogueLines.map((line) => line.variantId));
     replaceBag(currentBagLines().filter((line) => !line.variantId || !ordered.has(line.variantId)));
     window.sessionStorage.removeItem(CHECKOUT_KEY);
+    if (result.razorpay) {
+      try {
+        const opened = await openRazorpayCheckout(result.razorpay);
+        if (opened.status === "failed" || opened.status === "error") {
+          setError(opened.message ?? "The payment was not completed. The order was saved and can be paid from the order page.");
+        }
+      } catch {
+        setError("Razorpay Checkout could not be loaded. The order was saved and can be paid from the order page.");
+      }
+    } else if (result.warning) {
+      setError(result.warning);
+    }
+    setPending(false);
     router.push(`/order/${result.reference}`);
   }
 
@@ -130,7 +146,9 @@ export function CheckoutForm({
       <h1 className="font-display text-5xl md:text-6xl">Checkout</h1>
       <p className="mt-4 max-w-xl text-sm leading-6 text-charcoal">
         {canOrder
-          ? "The order is created unpaid. Opening the confirmation page does not take payment or mark it paid."
+          ? razorpayReady
+            ? "The order is saved before Razorpay Checkout opens. The order is confirmed only after the server verifies a captured payment."
+            : "Online payment is not configured. Placing the order reserves catalogue stock and leaves the order unpaid."
           : "Supabase is not configured, so an order cannot be created. No payment will be taken."}
       </p>
       <form onSubmit={onSubmit} className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
@@ -205,7 +223,9 @@ export function CheckoutForm({
             )}
             <p className="text-sm leading-6 text-charcoal">
               {razorpayReady
-                ? "Razorpay is the configured gateway. This step does not open a payment or mark the order paid."
+                ? testMode
+                  ? "Razorpay test mode is on. Use Razorpay’s test payment methods. A live charge is not made."
+                  : "Razorpay Checkout opens after the order is saved. The payable amount comes from the saved order."
                 : "Online payment is not configured. Placing the order reserves catalogue stock and leaves the order unpaid."}
             </p>
           </fieldset>
@@ -217,7 +237,7 @@ export function CheckoutForm({
           </label>
           {error ? <p role="alert" className="text-sm">{error}</p> : null}
           <button type="submit" disabled={!canOrder || pending || catalogueLines.length === 0 || sampleLines.length > 0} className="h-12 w-full bg-ink text-[11px] tracking-[0.16em] text-ivory uppercase disabled:bg-stone">
-            {pending ? "Placing order" : "Place unpaid order"}
+            {pending ? "Opening payment" : razorpayReady ? "Continue to payment" : "Place unpaid order"}
           </button>
           {!canOrder ? <p className="text-sm">Add the Supabase URL, anon key, and server key before an order can be created.</p> : null}
           {sampleLines.length > 0 ? <p className="text-sm">Remove sample pieces from the bag before checkout. They are not catalogue stock.</p> : null}

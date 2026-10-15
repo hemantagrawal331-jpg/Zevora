@@ -1,6 +1,10 @@
 import "server-only";
-import { gatewayReady } from "@/lib/commerce/checkout-input";
+import { razorpaySettings } from "@/lib/commerce/razorpay-api";
 
 export function razorpayConfigured() {
-  return gatewayReady(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "", process.env.RAZORPAY_KEY_SECRET ?? "");
+  return razorpaySettings() !== null;
+}
+
+export function razorpayTestMode() {
+  return razorpaySettings()?.testMode ?? false;
 }

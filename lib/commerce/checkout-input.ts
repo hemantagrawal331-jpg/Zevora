@@ -167,11 +167,11 @@ export function canReadOrder(input: {
 }
 
 export function describePayment(events: { status: string }[]) {
-  const latest = [...events].reverse().find((event) => event.status !== "pending");
-  if (latest?.status === "refunded") return "Refunded";
-  if (latest?.status === "captured") return "Paid";
-  if (latest?.status === "failed") return "Failed";
-  if (latest?.status === "authorized") return "Authorised, not captured";
+  const statuses = new Set(events.map((event) => event.status));
+  if (statuses.has("refunded")) return "Refunded";
+  if (statuses.has("captured")) return "Paid";
+  if (statuses.has("authorized")) return "Authorised, not captured";
+  if (statuses.has("failed")) return "Failed";
   return "Unpaid";
 }
 

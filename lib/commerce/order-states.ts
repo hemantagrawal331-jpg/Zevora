@@ -43,7 +43,6 @@ export function adminCanTransition(from: string, to: string) {
 
 export function fulfilmentAfterPayment(current: string, paymentStatus: string) {
   if (paymentStatus === "captured" && current === "pending_payment") return "confirmed";
-  if (paymentStatus === "failed" && current === "pending_payment") return "payment_failed";
   if (paymentStatus === "refunded" && current === "returned") return "refunded";
   return current;
 }

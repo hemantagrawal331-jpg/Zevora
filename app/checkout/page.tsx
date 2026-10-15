@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CheckoutForm } from "@/components/checkout-form";
 import { Container } from "@/components/container";
-import { razorpayConfigured } from "@/lib/commerce/gateway";
+import { razorpayConfigured, razorpayTestMode } from "@/lib/commerce/gateway";
 import { getCatalogueProfile } from "@/lib/commerce/session";
 import { isSupabaseConfigured, serviceRoleKey } from "@/lib/supabase/config";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Checkout",
-  description: "Delivery details for a ZEVORA order. Payment is not taken on this page.",
+  description: "Delivery details for a ZEVORA order. Payment is confirmed only after the server verifies Razorpay.",
 };
 
 export default function CheckoutPage() {
@@ -40,6 +40,7 @@ async function CheckoutContent() {
       profile={profile ? { fullName: profile.fullName, email: profile.email } : null}
       addresses={addresses}
       razorpayReady={razorpayConfigured()}
+      testMode={razorpayTestMode()}
       canOrder={isSupabaseConfigured() && Boolean(serviceRoleKey())}
     />
   );

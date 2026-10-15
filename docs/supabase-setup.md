@@ -18,11 +18,13 @@ NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-PAYMENT_WEBHOOK_SECRET=
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
 SUPABASE_IMAGE_TRANSFORMS=false
 ```
 
-`PAYMENT_WEBHOOK_SECRET` stays empty until a payment provider is chosen. The webhook at `/api/payments/webhook` returns 503 and does not change payment status when it is empty.
+`RAZORPAY_WEBHOOK_SECRET` stays empty until the Razorpay webhook is created. The webhook at `/api/payments/webhook` returns 503 and does not change payment status when it is empty. `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` are different secrets. See `docs/razorpay.md`.
 
 Set `SUPABASE_IMAGE_TRANSFORMS=true` only after Image Transformations are enabled for the project. Otherwise the shop uses the original public object URL.
 
@@ -76,18 +78,8 @@ Checkout creates an order with status `pending_payment` and reserves stock insid
 
 The default rules, stored in `checkout_settings`, are complimentary shipping from ₹5,000, otherwise ₹150, and GST at 5% included in the listed price. A coupon amount for `percent` is in basis points, so 1000 means 10%.
 
-Razorpay is shown only when both `NEXT_PUBLIC_RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set. This step does not create a Razorpay charge and has no control that marks an order paid. Opening `/order/ZV........` does not change payment status.
+Razorpay checkout is configured with `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. `NEXT_PUBLIC_RAZORPAY_KEY_ID` is optional and must match the server key id when both are set. The checkout page returns the public key to the browser. The key secret stays on the server.
 
-A provider may later `POST /api/payments/webhook` with `x-zevora-signature` set to the hex HMAC-SHA256 of the raw body using `PAYMENT_WEBHOOK_SECRET`. The body is JSON:
+`POST /api/payments/webhook` is the Razorpay webhook. It reads the raw body and checks `x-razorpay-signature` with `RAZORPAY_WEBHOOK_SECRET`. That secret is separate from `RAZORPAY_KEY_SECRET`. If the webhook secret is missing, the route returns 503 and does not change an order. An invalid signature returns 400. Dashboard setup, test cards, and the event list are in `docs/razorpay.md`.
 
-```json
-{
-  "provider": "razorpay",
-  "eventId": "evt_unique",
-  "orderId": "order-uuid",
-  "status": "captured",
-  "amountInPaise": 199900
-}
-```
-
-`provider` cannot be `unconfigured`. The captured amount must match the order total. Capture moves only `pending_payment` to `confirmed`. `failed` moves that same state to `payment_failed` and returns the reserved stock. The same provider and event id is stored once. Repeating it returns `duplicate` and does not apply the event again. `PAYMENT_WEBHOOK_SECRET` stays empty until you choose a provider. The webhook then returns 503 and does not change payment status.
+Apply `db/migrations/004_razorpay.sql` after `003_checkout.sql`. A declined payment stays `pending_payment` so the same Razorpay order can be retried. A captured payment whose amount matches the order confirms only `pending_payment`. Opening `/order/ZV........` does not mark an order paid by itself. When Razorpay is configured, that page asks Razorpay for the payment status before it renders.

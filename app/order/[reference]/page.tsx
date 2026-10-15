@@ -3,7 +3,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Container } from "@/components/container";
 import { OrderRecord } from "@/components/order-record";
+import { razorpayConfigured } from "@/lib/commerce/gateway";
 import { loadOrderForViewer } from "@/lib/commerce/load-order";
+import { reconcileRazorpayOrder } from "@/lib/commerce/razorpay-payment";
 
 export const metadata: Metadata = {
   title: "Order",
@@ -19,8 +21,8 @@ export default function OrderPage({ params }: { params: Promise<{ reference: str
 }
 
 async function OrderContent({ params }: { params: Promise<{ reference: string }> }) {
-  const { reference } = await params;
-  const loaded = await loadOrderForViewer(reference.toUpperCase());
+  const reference = (await params).reference.toUpperCase();
+  const loaded = await loadOrderForViewer(reference);
   if (!loaded || loaded.forbidden) {
     return (
       <Container className="max-w-xl py-16">
@@ -32,5 +34,18 @@ async function OrderContent({ params }: { params: Promise<{ reference: string }>
       </Container>
     );
   }
-  return <OrderRecord order={loaded.order} />;
+  if (loaded.order.status === "pending_payment") await reconcileRazorpayOrder(reference);
+  const current = loaded.order.status === "pending_payment" ? await loadOrderForViewer(reference) : loaded;
+  if (!current || current.forbidden) {
+    return (
+      <Container className="max-w-xl py-16">
+        <h1 className="font-display text-5xl">Order unavailable</h1>
+        <p className="mt-4 text-sm leading-6 text-charcoal">
+          This order could not be opened. Use the confirmation from this browser, or sign in to the account that placed it.
+        </p>
+        <Link href="/account/orders" className="mt-6 inline-flex text-sm underline">Order history</Link>
+      </Container>
+    );
+  }
+  return <OrderRecord order={current.order} canPay={razorpayConfigured() && current.order.status === "pending_payment"} />;
 }

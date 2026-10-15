@@ -79,7 +79,8 @@ test("coupons, shipping, and duplicate checkout attempts stay on the server rule
 });
 
 test("failed and repeated payment events do not confirm an order", () => {
-  assert.equal(fulfilmentAfterPayment("pending_payment", "failed"), "payment_failed");
+  assert.equal(fulfilmentAfterPayment("pending_payment", "failed"), "pending_payment");
+  assert.equal(fulfilmentAfterPayment("pending_payment", "authorized"), "pending_payment");
   assert.equal(fulfilmentAfterPayment("pending_payment", "success-url"), "pending_payment");
   assert.equal(fulfilmentAfterPayment("payment_failed", "captured"), "payment_failed");
   assert.equal(adminCanTransition("pending_payment", "confirmed"), false);
@@ -90,12 +91,14 @@ test("failed and repeated payment events do not confirm an order", () => {
     return { status: fulfilmentAfterPayment(current, payment), result: "applied" as const };
   };
   const failed = apply("pending_payment", "evt_fail", "failed");
-  assert.equal(failed.status, "payment_failed");
+  assert.equal(failed.status, "pending_payment");
   const repeat = apply(failed.status, "evt_fail", "captured");
   assert.equal(repeat.result, "duplicate");
-  assert.equal(repeat.status, "payment_failed");
+  assert.equal(repeat.status, "pending_payment");
   assert.equal(describePayment([{ status: "pending" }]), "Unpaid");
   assert.equal(describePayment([{ status: "pending" }, { status: "failed" }]), "Failed");
+  assert.equal(describePayment([{ status: "failed" }, { status: "captured" }]), "Paid");
+  assert.equal(describePayment([{ status: "captured" }, { status: "failed" }]), "Paid");
   assert.equal(describePayment([{ status: "captured" }]), "Paid");
 });
 

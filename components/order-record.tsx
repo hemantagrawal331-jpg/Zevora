@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { OrderActions } from "@/components/order-actions";
+import { PayOrder } from "@/components/pay-order";
 import { OrderTotals } from "@/components/order-totals";
 import { describePayment } from "@/lib/commerce/checkout-input";
 import type { OrderView } from "@/lib/commerce/load-order";
 import { customerCanCancel, customerCanRequestReturn, fulfilmentLabels, isFulfilmentStatus } from "@/lib/commerce/order-states";
 import { formatPrice } from "@/lib/format";
 
-export function OrderRecord({ order }: { order: OrderView }) {
+export function OrderRecord({ order, canPay }: { order: OrderView; canPay: boolean }) {
   const payment = describePayment(order.payments);
   const fulfilment = isFulfilmentStatus(order.status) ? fulfilmentLabels[order.status] : order.status;
   const address = order.address;
@@ -16,11 +17,12 @@ export function OrderRecord({ order }: { order: OrderView }) {
       <p className="text-[11px] tracking-[0.2em] text-stone uppercase">Order {order.reference}</p>
       <h1 className="mt-3 font-display text-5xl md:text-6xl">{fulfilment}</h1>
       <p className="mt-4 text-sm leading-6 text-charcoal">
-        Payment: {payment}. Reaching this page does not mark the order paid.
+        Payment: {payment}. Refreshing this page shows the payment status verified by the server.
       </p>
       {order.status === "pending_payment" ? (
-        <p className="mt-3 text-sm leading-6">This order is awaiting payment. No charge has been confirmed.</p>
+        <p className="mt-3 text-sm leading-6">This order is awaiting payment. A declined attempt can be retried. This page does not mark the order paid.</p>
       ) : null}
+      {canPay && order.status === "pending_payment" ? <PayOrder reference={order.reference} /> : null}
       {order.status === "payment_failed" ? (
         <p className="mt-3 text-sm leading-6">The payment failed, so this order was not confirmed. <Link className="underline" href="/shop">Continue shopping</Link> to try again.</p>
       ) : null}

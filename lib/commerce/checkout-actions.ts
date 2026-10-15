@@ -13,6 +13,8 @@ import {
   type CatalogueVariant,
 } from "@/lib/commerce/checkout-input";
 import { razorpayConfigured } from "@/lib/commerce/gateway";
+import { prepareRazorpayCheckout, refundCapturedRazorpayPayments } from "@/lib/commerce/razorpay-payment";
+import type { RazorpayCheckoutPayload } from "@/lib/commerce/razorpay";
 import { productImageUrl } from "@/lib/commerce/images";
 import { loadOrderForViewer } from "@/lib/commerce/load-order";
 import { newOrderAccessToken } from "@/lib/commerce/order-access";
@@ -23,7 +25,7 @@ import { isSupabaseConfigured, serviceRoleKey } from "@/lib/supabase/config";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { createSupabaseService } from "@/lib/supabase/service";
 
-export type CheckoutResult = { error?: string; reference?: string };
+export type CheckoutResult = { error?: string; reference?: string; warning?: string; razorpay?: RazorpayCheckoutPayload };
 export type QuoteResult = { error?: string; quote?: CheckoutQuote };
 
 export type MergeResult = {
@@ -226,7 +228,11 @@ export async function createCheckoutOrderAction(form: FormData): Promise<Checkou
   }
   revalidatePath("/account/orders");
   revalidatePath(`/order/${reference}`);
-  return { reference };
+  if (!razorpayConfigured()) return { reference };
+  const payment = await prepareRazorpayCheckout(reference);
+  if (!payment.ok) return { reference, warning: payment.message };
+  if ("alreadyPaid" in payment) return { reference };
+  return { reference, razorpay: payment.checkout };
 }
 
 async function runOrderChange(reference: string, call: (client: NonNullable<ReturnType<typeof createSupabaseService>>) => PromiseLike<{ error: { message: string } | null }>) {
@@ -248,9 +254,11 @@ export async function cancelOrderAction(_state: { message?: string; error?: stri
   const loaded = await loadOrderForViewer(reference);
   if (!loaded || loaded.forbidden) return { error: "This order could not be opened." };
   if (!customerCanCancel(loaded.order.status)) return { error: "This order can no longer be cancelled." };
+  const refunded = await refundCapturedRazorpayPayments(loaded.order.id);
+  if (!refunded.ok) return { error: refunded.message };
   const result = await runOrderChange(reference, (client) => client.rpc("cancel_checkout_order", { p_reference: reference }));
   if (result.error) return result;
-  return { message: "The order was cancelled. Reserved pieces were released. No payment was taken on this page." };
+  return { message: "The order was cancelled. Reserved pieces were released. A captured Razorpay payment is refunded before cancellation." };
 }
 
 export async function requestReturnAction(_state: { message?: string; error?: string }, form: FormData): Promise<{ message?: string; error?: string }> {
@@ -264,6 +272,12 @@ export async function requestReturnAction(_state: { message?: string; error?: st
   const result = await runOrderChange(reference, (client) => client.rpc("request_order_return", { p_reference: reference, p_note: note }));
   if (result.error) return result;
   return { message: "Return requested. This does not refund a payment." };
+}
+
+export async function beginRazorpayCheckoutAction(reference: string) {
+  const loaded = await loadOrderForViewer(reference);
+  if (!loaded || loaded.forbidden) return { ok: false as const, message: "This order could not be opened." };
+  return prepareRazorpayCheckout(reference);
 }
 
 export async function mergeCartAction(guest: { variantId: string; quantity: number }[]): Promise<MergeResult> {

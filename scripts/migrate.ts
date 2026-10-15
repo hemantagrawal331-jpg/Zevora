@@ -26,7 +26,7 @@ try {
 
   for (const file of files) {
     if (applied.has(file)) continue;
-    if ((file.startsWith("002") || file.startsWith("003")) && !hasAuth) {
+    if ((file.startsWith("002") || file.startsWith("003") || file.startsWith("004")) && !hasAuth) {
       console.error(
         `${file} was not applied. This database has no Supabase auth schema. Run it in the Supabase SQL editor.`,
       );
