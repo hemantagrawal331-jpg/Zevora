@@ -13,7 +13,7 @@ import {
   SearchIcon,
 } from "@/components/icons";
 import { useBag, useWishlist } from "@/components/store";
-import { navigation, type NavItem } from "@/lib/navigation";
+import { isNavCurrent, navigation, type NavItem } from "@/lib/navigation";
 import { site } from "@/lib/site";
 
 export function Header() {
@@ -22,6 +22,7 @@ export function Header() {
 }
 
 function HeaderBar() {
+  const pathname = usePathname();
   const bag = useBag();
   const wishlist = useWishlist();
   const [menu, setMenu] = useState<string | null>(null);
@@ -66,19 +67,21 @@ function HeaderBar() {
           </Link>
 
           <nav aria-label="Primary" className="ml-14 hidden lg:block">
-            <ul className="flex items-center gap-7">
+            <ul className="flex items-center gap-5">
               {navigation.map((item) => {
                 const open = menu === item.label;
+                const current = isNavCurrent(item.href, pathname);
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       aria-expanded={open}
                       aria-haspopup="true"
+                      aria-current={current ? "page" : undefined}
                       onMouseEnter={() => setMenu(item.label)}
                       onFocus={() => setMenu(item.label)}
                       className={`py-6 text-[11px] tracking-[0.18em] uppercase ${
-                        open ? "text-ink" : "text-charcoal hover:text-ink"
+                        open || current ? "text-ink" : "text-charcoal hover:text-ink"
                       }`}
                     >
                       {item.label}
@@ -203,6 +206,7 @@ function MegaMenu({ item, onNavigate }: { item: NavItem; onNavigate: () => void 
 }
 
 function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const pathname = usePathname();
   const [section, setSection] = useState<string | null>(navigation[0]?.label ?? null);
   const ref = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -285,7 +289,12 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
               return (
                 <li key={item.href} className="border-b border-line">
                   <div className="flex items-center justify-between">
-                    <Link href={item.href} onClick={onClose} className="py-4 text-sm tracking-[0.16em] uppercase">
+                    <Link
+                      href={item.href}
+                      aria-current={isNavCurrent(item.href, pathname) ? "page" : undefined}
+                      onClick={onClose}
+                      className="py-4 text-sm tracking-[0.16em] uppercase"
+                    >
                       {item.label}
                     </Link>
                     <button
@@ -394,10 +403,13 @@ function SearchDialog({ open, onClose }: { open: boolean; onClose: () => void })
             ref={inputRef}
             name="q"
             type="search"
-            placeholder="Search coats, knits, bags"
+            placeholder="Search jeans, hoodies, bags"
             aria-label="Search"
             className="h-full w-full bg-transparent text-base outline-none placeholder:text-stone"
           />
+          <button type="submit" className="text-[11px] tracking-[0.16em] uppercase">
+            Search
+          </button>
           <button type="button" onClick={onClose} className="text-[11px] tracking-[0.16em] uppercase">
             Close
           </button>

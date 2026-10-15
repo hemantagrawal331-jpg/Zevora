@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CatalogView } from "@/components/catalog-view";
+import { ScopedCatalog } from "@/components/scoped-catalog";
 import { getBestsellers } from "@/lib/catalog";
 
 export const metadata: Metadata = {
@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 
 export default function BestsellersPage() {
   return (
-    <CatalogView
+    <ScopedCatalog
       eyebrow="Most kept"
       title="Bestsellers"
-      description="Coats, knits, and accessories that leave the edit first."
+      description="Pieces marked as bestsellers in the demo catalogue."
       products={getBestsellers()}
     />
   );

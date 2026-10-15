@@ -6,6 +6,7 @@
  * in lib/products.ts if the garment in the photo changes.
  */
 export const images = {
+  productFallback: "",
   hero: "/images/hero.jpg",
   categoryMen: "/images/category-men.jpg",
   categoryWomen: "/images/category-women.jpg",

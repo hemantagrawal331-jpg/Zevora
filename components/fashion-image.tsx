@@ -20,10 +20,10 @@ export function FashionImage({
 }) {
   const [failed, setFailed] = useState(false);
 
-  if (failed) {
+  if (!src || failed) {
     return (
-      <div className="absolute inset-0 flex items-end bg-sand p-4">
-        <span className="text-[11px] tracking-[0.14em] text-stone uppercase">{alt}</span>
+      <div role="img" aria-label={alt} className="absolute inset-0 flex items-end bg-sand p-4">
+        <span className="text-[11px] tracking-[0.14em] text-stone uppercase">Photograph pending</span>
       </div>
     );
   }

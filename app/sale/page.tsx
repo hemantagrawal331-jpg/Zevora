@@ -1,21 +1,19 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { SaleCatalog } from "@/components/sale-catalog";
-import { CatalogSkeleton } from "@/components/skeletons";
+import { ScopedCatalog } from "@/components/scoped-catalog";
+import { getSaleProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Sale",
-  description: "Reduced pieces from the ZEVORA edit.",
+  description: "Reduced pieces from the ZEVORA edit, priced in rupees.",
 };
 
-export default function SalePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ department?: string | string[] }>;
-}) {
+export default function SalePage() {
   return (
-    <Suspense fallback={<CatalogSkeleton />}>
-      <SaleCatalog searchParams={searchParams} />
-    </Suspense>
+    <ScopedCatalog
+      eyebrow="Reduced"
+      title="Sale"
+      description="Pieces with a lower current price than the original price."
+      products={getSaleProducts()}
+    />
   );
 }

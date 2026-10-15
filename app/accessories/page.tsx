@@ -1,19 +1,22 @@
 import type { Metadata } from "next";
-import { CatalogView } from "@/components/catalog-view";
-import { getByDepartment } from "@/lib/catalog";
+import { ScopedCatalog } from "@/components/scoped-catalog";
+import { getCategory } from "@/lib/categories";
+import { getByCategory } from "@/lib/catalog";
+
+const category = getCategory("accessories");
 
 export const metadata: Metadata = {
   title: "Accessories",
-  description: "Bags, jewelry, sunglasses, and scarves from ZEVORA.",
+  description: category?.description,
 };
 
 export default function AccessoriesPage() {
   return (
-    <CatalogView
+    <ScopedCatalog
       eyebrow="Accessories"
       title="Accessories"
-      description="Leather, metal, and knit — the pieces that finish a look."
-      products={getByDepartment("accessories")}
+      description={category?.description}
+      products={getByCategory("accessories")}
     />
   );
 }

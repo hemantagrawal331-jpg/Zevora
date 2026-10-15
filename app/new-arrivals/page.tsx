@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CatalogView } from "@/components/catalog-view";
+import { ScopedCatalog } from "@/components/scoped-catalog";
 import { getNewArrivals } from "@/lib/catalog";
 
 export const metadata: Metadata = {
@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 
 export default function NewArrivalsPage() {
   return (
-    <CatalogView
+    <ScopedCatalog
       eyebrow="Just in"
       title="New arrivals"
-      description="The latest coats, knits, and small accessories."
+      description="The latest denim, sweats, tailoring, and accessories."
       products={getNewArrivals()}
     />
   );

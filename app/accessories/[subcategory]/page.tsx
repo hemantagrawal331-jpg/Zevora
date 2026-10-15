@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CatalogView } from "@/components/catalog-view";
+import { ScopedCatalog } from "@/components/scoped-catalog";
+import { getCategory, getSubcategory } from "@/lib/categories";
 import { getBySubcategory, subcategoryParams } from "@/lib/catalog";
-import { subcategoryLabels } from "@/lib/products";
 
 export function generateStaticParams() {
   return subcategoryParams("accessories");
@@ -14,8 +14,8 @@ export async function generateMetadata({
   params: Promise<{ subcategory: string }>;
 }): Promise<Metadata> {
   const { subcategory } = await params;
-  const label = subcategoryLabels[subcategory] ?? "Accessories";
-  return { title: label };
+  const sub = getSubcategory("accessories", subcategory);
+  return { title: sub?.label ?? "Accessories", description: sub ? `${sub.label}.` : undefined };
 }
 
 export default async function AccessoriesSubcategoryPage({
@@ -24,9 +24,16 @@ export default async function AccessoriesSubcategoryPage({
   params: Promise<{ subcategory: string }>;
 }) {
   const { subcategory } = await params;
-  const label = subcategoryLabels[subcategory];
-  const products = getBySubcategory("accessories", subcategory);
-  if (!label || products.length === 0) notFound();
+  const category = getCategory("accessories");
+  const sub = getSubcategory("accessories", subcategory);
+  if (!category || !sub) notFound();
 
-  return <CatalogView eyebrow="Accessories" title={label} products={products} />;
+  return (
+    <ScopedCatalog
+      eyebrow={category.label}
+      title={sub.label}
+      description={sub.label}
+      products={getBySubcategory("accessories", subcategory)}
+    />
+  );
 }

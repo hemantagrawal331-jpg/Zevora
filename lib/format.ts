@@ -1,9 +1,12 @@
-export function formatPrice(amount: number) {
+export function formatPrice(paise: number) {
+  const rupees = paise / 100;
+  const whole = Number.isInteger(rupees);
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  }).format(rupees);
 }
 
 export function salePercent(price: number, compareAtPrice: number) {

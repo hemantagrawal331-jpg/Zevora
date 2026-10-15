@@ -1,21 +1,20 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { SearchResults } from "@/components/search-results";
-import { CatalogSkeleton } from "@/components/skeletons";
+import { ScopedCatalog } from "@/components/scoped-catalog";
+import { activeProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Search",
   description: "Search clothing and accessories at ZEVORA.",
 };
 
-export default function SearchPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string | string[] }>;
-}) {
+export default function SearchPage() {
   return (
-    <Suspense fallback={<CatalogSkeleton />}>
-      <SearchResults searchParams={searchParams} />
-    </Suspense>
+    <ScopedCatalog
+      eyebrow="Search"
+      title="Search the collection"
+      description="Search by product name, category, or a word such as denim, hoodie, or bag."
+      products={activeProducts()}
+      requireQuery
+    />
   );
 }

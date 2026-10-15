@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CatalogView } from "@/components/catalog-view";
+import { ScopedCatalog } from "@/components/scoped-catalog";
+import { getCategory, getSubcategory } from "@/lib/categories";
 import { getBySubcategory, subcategoryParams } from "@/lib/catalog";
-import { subcategoryLabels } from "@/lib/products";
 
 export function generateStaticParams() {
   return subcategoryParams("women");
@@ -14,8 +14,8 @@ export async function generateMetadata({
   params: Promise<{ subcategory: string }>;
 }): Promise<Metadata> {
   const { subcategory } = await params;
-  const label = subcategoryLabels[subcategory] ?? "Women";
-  return { title: label };
+  const sub = getSubcategory("women", subcategory);
+  return { title: sub?.label ?? "Women", description: sub ? `${sub.label} for women.` : undefined };
 }
 
 export default async function WomenSubcategoryPage({
@@ -24,9 +24,16 @@ export default async function WomenSubcategoryPage({
   params: Promise<{ subcategory: string }>;
 }) {
   const { subcategory } = await params;
-  const label = subcategoryLabels[subcategory];
-  const products = getBySubcategory("women", subcategory);
-  if (!label || products.length === 0) notFound();
+  const category = getCategory("women");
+  const sub = getSubcategory("women", subcategory);
+  if (!category || !sub) notFound();
 
-  return <CatalogView eyebrow="Women" title={label} products={products} />;
+  return (
+    <ScopedCatalog
+      eyebrow={category.label}
+      title={sub.label}
+      description={`${sub.label} for women.`}
+      products={getBySubcategory("women", subcategory)}
+    />
+  );
 }

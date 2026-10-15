@@ -1,3 +1,4 @@
+import { categories, type CategoryId } from "@/lib/categories";
 import { images } from "@/lib/images";
 
 export type NavLink = {
@@ -24,7 +25,76 @@ export type NavItem = {
   feature: NavFeature;
 };
 
+const features: Record<CategoryId | "shop" | "new" | "sale", NavFeature> = {
+  shop: {
+    href: "/shop",
+    image: images.hero,
+    alt: "Woman standing in a studio wearing a black blazer.",
+    caption: "The collection",
+  },
+  new: {
+    href: "/new-arrivals",
+    image: images.products.camelCoat,
+    alt: "Camel wool coat from the new arrivals.",
+    caption: "Just in",
+  },
+  men: {
+    href: "/men/jackets",
+    image: images.categoryMen,
+    alt: "Man in a navy suit.",
+    caption: "Jackets",
+  },
+  women: {
+    href: "/women/jackets",
+    image: images.categoryWomen,
+    alt: "Woman in a powder-blue coat in a city square.",
+    caption: "Jackets",
+  },
+  accessories: {
+    href: "/accessories/bags",
+    image: images.categoryAccessories,
+    alt: "Layered gold necklaces.",
+    caption: "Bags and jewellery",
+  },
+  sale: {
+    href: "/sale",
+    image: images.products.floralDress,
+    alt: "Floral wrap dress from the sale edit.",
+    caption: "Now reduced",
+  },
+};
+
+function subcategoryColumns(categoryId: CategoryId): NavColumn[] {
+  const category = categories.find((item) => item.id === categoryId);
+  if (!category) return [];
+  const links = category.subcategories.map((subcategory) => ({
+    label: subcategory.label,
+    href: `${category.href}/${subcategory.slug}`,
+  }));
+  const midpoint = Math.ceil(links.length / 2);
+  return [
+    { title: "Clothing", links: links.slice(0, midpoint) },
+    { title: "More", links: links.slice(midpoint) },
+  ].filter((column) => column.links.length > 0);
+}
+
 export const navigation: NavItem[] = [
+  {
+    label: "Shop",
+    href: "/shop",
+    columns: [
+      {
+        title: "Departments",
+        links: [
+          { label: "All clothing", href: "/shop" },
+          ...categories.map((category) => ({ label: category.label, href: category.href })),
+          { label: "New arrivals", href: "/new-arrivals" },
+          { label: "Sale", href: "/sale" },
+        ],
+      },
+    ],
+    feature: features.shop,
+  },
   {
     label: "New Arrivals",
     href: "/new-arrivals",
@@ -33,105 +103,28 @@ export const navigation: NavItem[] = [
         title: "Just in",
         links: [
           { label: "All new arrivals", href: "/new-arrivals" },
-          { label: "Menswear", href: "/men" },
-          { label: "Womenswear", href: "/women" },
-          { label: "Accessories", href: "/accessories" },
-        ],
-      },
-      {
-        title: "Highlighted",
-        links: [
-          { label: "Coats", href: "/women/outerwear" },
-          { label: "Knitwear", href: "/men/knitwear" },
-          { label: "Sunglasses", href: "/accessories/sunglasses" },
+          ...categories.map((category) => ({ label: category.label, href: category.href })),
         ],
       },
     ],
-    feature: {
-      href: "/new-arrivals",
-      image: images.products.camelCoat,
-      alt: "Camel wool coat from the new arrivals.",
-      caption: "The new coat",
-    },
+    feature: features.new,
   },
-  {
-    label: "Men",
-    href: "/men",
+  ...categories.map((category) => ({
+    label: category.label,
+    href: category.href,
     columns: [
       {
         title: "Featured",
         links: [
-          { label: "All menswear", href: "/men" },
+          { label: `All ${category.label.toLowerCase()}`, href: category.href },
           { label: "New arrivals", href: "/new-arrivals" },
-          { label: "Sale", href: "/sale?department=men" },
+          { label: "Sale", href: `/sale?department=${category.id}` },
         ],
       },
-      {
-        title: "Clothing",
-        links: [
-          { label: "Outerwear", href: "/men/outerwear" },
-          { label: "Knitwear", href: "/men/knitwear" },
-        ],
-      },
+      ...subcategoryColumns(category.id),
     ],
-    feature: {
-      href: "/men/outerwear",
-      image: images.categoryMen,
-      alt: "Man in a navy suit.",
-      caption: "Tailoring",
-    },
-  },
-  {
-    label: "Women",
-    href: "/women",
-    columns: [
-      {
-        title: "Featured",
-        links: [
-          { label: "All womenswear", href: "/women" },
-          { label: "New arrivals", href: "/new-arrivals" },
-          { label: "Sale", href: "/sale?department=women" },
-        ],
-      },
-      {
-        title: "Clothing",
-        links: [
-          { label: "Dresses", href: "/women/dresses" },
-          { label: "Tops", href: "/women/tops" },
-          { label: "Knitwear", href: "/women/knitwear" },
-          { label: "Outerwear", href: "/women/outerwear" },
-        ],
-      },
-    ],
-    feature: {
-      href: "/women/outerwear",
-      image: images.categoryWomen,
-      alt: "Woman in a powder-blue coat in a city square.",
-      caption: "Outerwear",
-    },
-  },
-  {
-    label: "Accessories",
-    href: "/accessories",
-    columns: [
-      {
-        title: "Shop",
-        links: [
-          { label: "All accessories", href: "/accessories" },
-          { label: "Bags", href: "/accessories/bags" },
-          { label: "Jewelry", href: "/accessories/jewelry" },
-          { label: "Sunglasses", href: "/accessories/sunglasses" },
-          { label: "Scarves", href: "/accessories/scarves" },
-        ],
-      },
-    ],
-    feature: {
-      href: "/accessories/jewelry",
-      image: images.categoryAccessories,
-      alt: "Layered gold necklaces.",
-      caption: "Jewelry",
-    },
-  },
+    feature: features[category.id],
+  })),
   {
     label: "Sale",
     href: "/sale",
@@ -140,20 +133,22 @@ export const navigation: NavItem[] = [
         title: "Sale",
         links: [
           { label: "All sale", href: "/sale" },
-          { label: "Men", href: "/sale?department=men" },
-          { label: "Women", href: "/sale?department=women" },
-          { label: "Accessories", href: "/sale?department=accessories" },
+          ...categories.map((category) => ({
+            label: category.label,
+            href: `/sale?department=${category.id}`,
+          })),
         ],
       },
     ],
-    feature: {
-      href: "/sale",
-      image: images.products.floralDress,
-      alt: "Floral wrap dress from the sale edit.",
-      caption: "Now reduced",
-    },
+    feature: features.sale,
   },
 ];
+
+export function isNavCurrent(href: string, pathname: string) {
+  const path = href.split("?")[0] ?? href;
+  if (path === "/shop" || path === "/new-arrivals" || path === "/sale") return pathname === path;
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
 
 export const footerNavigation = {
   support: [
@@ -164,6 +159,7 @@ export const footerNavigation = {
   ],
   company: [
     { label: "The house", href: "/about" },
+    { label: "Shop", href: "/shop" },
     { label: "New arrivals", href: "/new-arrivals" },
     { label: "Account", href: "/account" },
   ],

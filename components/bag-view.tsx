@@ -6,6 +6,7 @@ import { FashionImage } from "@/components/fashion-image";
 import { removeFromBag, setBagQuantity, useBag } from "@/components/store";
 import { getProductById } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
+import { mainImage, sizeStock } from "@/lib/products";
 
 export function BagView() {
   const bag = useBag();
@@ -15,7 +16,7 @@ export function BagView() {
   }));
   const subtotal = rows.reduce((total, row) => {
     if (!row.product) return total;
-    return total + row.product.price * row.line.quantity;
+    return total + row.product.priceInPaise * row.line.quantity;
   }, 0);
 
   return (
@@ -37,14 +38,21 @@ export function BagView() {
       ) : (
         <div className="mt-10 grid gap-12 lg:grid-cols-[1.4fr_0.6fr]">
           <ul className="divide-y divide-line border-y border-line">
-            {rows.map(({ line, product }) => (
+            {rows.map(({ line, product }) => {
+              const image = product ? mainImage(product, line.color) : null;
+              const stock = product && line.size ? sizeStock(product, line.size) : 0;
+              const quantities = Array.from(
+                { length: Math.max(line.quantity, Math.min(5, stock)) },
+                (_, index) => index + 1,
+              );
+              return (
               <li key={`${line.productId}-${line.color}-${line.size ?? "one"}`} className="flex gap-4 py-6">
                 <div className="relative h-36 w-28 shrink-0 bg-sand">
-                  {product ? (
+                  {image ? (
                     <FashionImage
-                      src={product.image}
-                      alt={product.imageAlt}
-                      fit={product.imageFit}
+                      src={image.src}
+                      alt={image.alt}
+                      fit={image.fit}
                       sizes="112px"
                     />
                   ) : null}
@@ -59,7 +67,7 @@ export function BagView() {
                         {line.color}
                         {line.size ? ` · Size ${line.size}` : ""}
                       </p>
-                      <p className="mt-2 text-sm">{formatPrice(product.price)}</p>
+                      <p className="mt-2 text-sm">{formatPrice(product.priceInPaise)}</p>
                     </>
                   ) : (
                     <p className="text-sm">This piece is no longer in the edit.</p>
@@ -80,7 +88,7 @@ export function BagView() {
                         }
                         className="ml-2 bg-transparent text-sm"
                       >
-                        {[1, 2, 3, 4, 5].map((value) => (
+                        {quantities.map((value) => (
                           <option key={value} value={value}>
                             {value}
                           </option>
@@ -97,7 +105,8 @@ export function BagView() {
                   </div>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
           <aside className="h-fit border border-line p-6">
             <h2 className="text-[11px] tracking-[0.18em] uppercase">Summary</h2>

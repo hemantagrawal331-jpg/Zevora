@@ -1,6 +1,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { decideBagQuantity } from "@/lib/bag-rules";
+import { getProductById } from "@/lib/catalog";
+import { sizeStock } from "@/lib/products";
 
 export type BagLine = {
   productId: string;
@@ -130,7 +133,11 @@ export function addToBag(input: {
   size: string | null;
   quantity?: number;
 }) {
-  const quantity = Math.min(MAX_QTY, Math.max(1, input.quantity ?? 1));
+  const product = getProductById(input.productId);
+  if (!product) return { ok: false as const, message: "This piece is not available." };
+  if (!input.size || !product.sizes.some((size) => size.label === input.size)) {
+    return { ok: false as const, message: "Select an available size." };
+  }
   const lines = readBag().map((line) => ({ ...line }));
   const index = lines.findIndex(
     (line) =>
@@ -138,22 +145,24 @@ export function addToBag(input: {
       line.color === input.color &&
       line.size === input.size,
   );
-
-  if (index >= 0) {
-    lines[index] = {
-      ...lines[index],
-      quantity: Math.min(MAX_QTY, lines[index].quantity + quantity),
-    };
-  } else {
-    lines.push({
-      productId: input.productId,
-      color: input.color,
-      size: input.size,
-      quantity,
-    });
-  }
-
+  const already = index >= 0 ? lines[index].quantity : 0;
+  const decision = decideBagQuantity({
+    stock: sizeStock(product, input.size),
+    already,
+    requested: input.quantity ?? 1,
+    maxPerLine: MAX_QTY,
+  });
+  if (!decision.ok) return decision;
+  const next = {
+    productId: input.productId,
+    color: input.color,
+    size: input.size,
+    quantity: decision.quantity,
+  };
+  if (index >= 0) lines[index] = next;
+  else lines.push(next);
   writeBag(lines);
+  return { ok: true as const };
 }
 
 export function setBagQuantity(
@@ -162,12 +171,16 @@ export function setBagQuantity(
   size: string | null,
   quantity: number,
 ) {
+  const product = getProductById(productId);
+  const stock = product && size ? sizeStock(product, size) : 0;
   const lines = readBag().flatMap((line) => {
     const matches =
       line.productId === productId && line.color === color && line.size === size;
     if (!matches) return [line];
     if (quantity <= 0) return [];
-    return [{ ...line, quantity: Math.min(MAX_QTY, quantity) }];
+    const cap = Math.min(MAX_QTY, stock);
+    if (cap <= 0) return [line];
+    return [{ ...line, quantity: Math.min(cap, quantity) }];
   });
   writeBag(lines);
 }
