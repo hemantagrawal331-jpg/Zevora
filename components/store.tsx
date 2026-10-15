@@ -17,6 +17,7 @@ export type BagLine = {
   imageAlt?: string;
   sku?: string;
   stockHint?: number;
+  compareAtPriceInPaise?: number;
 };
 
 const BAG_KEY = "zevora-bag";
@@ -179,6 +180,7 @@ export function addToBag(input: {
     imageAlt: image?.alt ?? product.name,
     sku: variant?.sku ?? product.sku,
     stockHint: sizeStock(product, input.size, input.color),
+    compareAtPriceInPaise: variant?.compareAtPriceInPaise ?? product.compareAtPriceInPaise,
   };
   if (index >= 0) lines[index] = next;
   else lines.push(next);
@@ -205,6 +207,14 @@ export function setBagQuantity(
     return [{ ...line, quantity: Math.min(cap, quantity) }];
   });
   writeBag(lines);
+}
+
+export function currentBagLines() {
+  return readBag();
+}
+
+export function replaceBag(lines: BagLine[]) {
+  writeBag(lines.map((line) => ({ ...line, variantId: line.variantId ?? null })));
 }
 
 export function removeFromBag(

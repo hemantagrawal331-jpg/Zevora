@@ -30,7 +30,7 @@ Restart `npm run dev` after changing environment variables.
 
 ## 3. Apply the schema
 
-The commerce migration is `db/migrations/002_commerce.sql`. It creates profiles, categories, products, variants, images, wishlists, carts, orders, order items, payments, addresses, and inventory movements. It enables row level security, seeds the three departments and their subcategories, and creates the public `product-images` bucket.
+The commerce migrations are `db/migrations/002_commerce.sql` and `db/migrations/003_checkout.sql`. The first creates profiles, categories, products, variants, images, wishlists, carts, orders, order items, payments, addresses, and inventory movements. The checkout migration adds order references, coupons, fulfilment events, guest checkout, and server-side totals. It enables row level security, seeds the three departments and their subcategories, and creates the public `product-images` bucket.
 
 If `DATABASE_URL` points at this Supabase database and the `auth` schema exists:
 
@@ -38,7 +38,7 @@ If `DATABASE_URL` points at this Supabase database and the `auth` schema exists:
 npm run db:migrate
 ```
 
-If `DATABASE_URL` is a different database, the command skips `002_commerce.sql` and tells you to run it in the Supabase SQL editor. The sourcing migration is unchanged.
+If `DATABASE_URL` is a different database, the command skips `002_commerce.sql` and `003_checkout.sql` and tells you to run them in the Supabase SQL editor. Run 002 before 003. The sourcing migration is unchanged.
 
 The migration does not create an administrator and does not insert products.
 
@@ -70,9 +70,15 @@ Upload JPEG, PNG, or WebP files up to 5 MB from the product editor. Files are st
 
 If the public Supabase URL or anon key is missing, the shop keeps the sample catalogue and says so on the page. Sample products are not written into Supabase. When credentials are present, the shop reads active products from the database and does not mix in the sample list.
 
-## 8. Payments
+## 8. Checkout and payments
 
-Placing an order creates a pending order and a pending payment. It does not capture money. A provider may later `POST /api/payments/webhook` with `x-zevora-signature` set to the hex HMAC-SHA256 of the raw body using `PAYMENT_WEBHOOK_SECRET`. The body is JSON:
+Checkout creates an order with status `pending_payment` and reserves stock inside the database. Prices, discounts, shipping, and tax are calculated there. The browser total is ignored. A human-readable reference looks like `ZV` plus eight characters. Guest checkout is allowed; the confirmation page is opened with an httpOnly cookie, not by guessing the reference. Signed-in customers can also open their own orders from account history.
+
+The default rules, stored in `checkout_settings`, are complimentary shipping from ₹5,000, otherwise ₹150, and GST at 5% included in the listed price. A coupon amount for `percent` is in basis points, so 1000 means 10%.
+
+Razorpay is shown only when both `NEXT_PUBLIC_RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set. This step does not create a Razorpay charge and has no control that marks an order paid. Opening `/order/ZV........` does not change payment status.
+
+A provider may later `POST /api/payments/webhook` with `x-zevora-signature` set to the hex HMAC-SHA256 of the raw body using `PAYMENT_WEBHOOK_SECRET`. The body is JSON:
 
 ```json
 {
@@ -84,4 +90,4 @@ Placing an order creates a pending order and a pending payment. It does not capt
 }
 ```
 
-`provider` cannot be `unconfigured`. The same provider and event id is stored once. Repeating it returns `duplicate` and does not apply the event again.
+`provider` cannot be `unconfigured`. The captured amount must match the order total. Capture moves only `pending_payment` to `confirmed`. `failed` moves that same state to `payment_failed` and returns the reserved stock. The same provider and event id is stored once. Repeating it returns `duplicate` and does not apply the event again. `PAYMENT_WEBHOOK_SECRET` stays empty until you choose a provider. The webhook then returns 503 and does not change payment status.

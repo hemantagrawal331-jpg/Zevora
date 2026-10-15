@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/admin/password.test.ts lib/admin/session.test.ts lib/sourcing/sourcing.test.ts lib/catalog.test.ts lib/commerce/commerce.test.ts",
+    "test": "tsx --test lib/admin/password.test.ts lib/admin/session.test.ts lib/sourcing/sourcing.test.ts lib/catalog.test.ts lib/commerce/commerce.test.ts lib/commerce/checkout.test.ts",
     "admin:hash": "tsx scripts/hash-admin-password.ts",
     "db:migrate": "tsx scripts/migrate.ts"
   },

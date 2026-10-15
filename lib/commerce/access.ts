@@ -27,6 +27,8 @@ export function safeCustomerNext(value: string | undefined | null) {
     path.startsWith("/account/") ||
     path === "/bag" ||
     path === "/wishlist" ||
+    path === "/checkout" ||
+    path.startsWith("/order/") ||
     path === "/admin" ||
     path.startsWith("/admin/products") ||
     path.startsWith("/admin/categories") ||

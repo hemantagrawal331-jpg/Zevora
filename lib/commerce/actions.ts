@@ -167,18 +167,22 @@ export async function setCategoryActiveAction(form: FormData) {
   refreshCatalogue();
 }
 
-const orderStatuses = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
-
 export async function updateOrderStatusAction(_state: ActionState, form: FormData): Promise<ActionState> {
   const gate = await adminClient();
   if (!gate.ok) return { error: gate.error };
   const id = String(form.get("id") ?? "");
   const status = String(form.get("status") ?? "");
-  if (!orderStatuses.includes(status)) return { error: "Choose a valid order status." };
-  const updated = await gate.supabase.from("orders").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
-  if (updated.error) return { error: "The order status could not be changed." };
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { error: "That order could not be found." };
+  const updated = await gate.supabase.rpc("admin_transition_order", { p_id: id, p_status: status });
+  if (updated.error) {
+    const message = updated.error.message || "";
+    if (message.includes("not allowed")) return { error: "That status change is not allowed." };
+    if (message.includes("cannot manage")) return { error: "This account cannot manage orders." };
+    return { error: "The order status could not be changed. Apply the checkout migration if it is missing. Payment status was not changed." };
+  }
   revalidatePath("/admin/orders");
-  return { message: "Order status updated. Payment status is unchanged." };
+  revalidatePath(`/admin/orders/${id}`);
+  return { message: "Fulfilment status updated. Payment status is unchanged." };
 }
 
 export async function saveAddressAction(_state: ActionState, form: FormData): Promise<ActionState> {
@@ -207,26 +211,8 @@ export async function saveAddressAction(_state: ActionState, form: FormData): Pr
   return { message: "Address saved." };
 }
 
-export async function placeOrderAction(_state: ActionState, form: FormData): Promise<ActionState> {
-  const supabase = await createSupabaseServer();
-  const profile = await getCatalogueProfile();
-  if (!supabase || !profile) return { error: "Sign in to place an order." };
-  const addressId = String(form.get("addressId") ?? "");
-  let items: unknown;
-  try {
-    items = JSON.parse(String(form.get("items") ?? "[]"));
-  } catch {
-    return { error: "The bag could not be read." };
-  }
-  if (!Array.isArray(items) || items.length === 0) return { error: "Your bag is empty." };
-  const payload = items.map((item) => {
-    const row = item as { variantId?: string; quantity?: number };
-    return { variant_id: row.variantId, quantity: row.quantity };
-  });
-  const placed = await supabase.rpc("place_order", { p_items: payload, p_address_id: addressId });
-  if (placed.error) return { error: placed.error.message || "The order could not be placed." };
-  revalidatePath("/account/orders");
-  return { message: `Order ${placed.data} is pending. Payment has not been taken.` };
+export async function placeOrderAction(): Promise<ActionState> {
+  return { error: "Place the order from checkout. No payment was taken." };
 }
 
 export async function toggleWishlistAction(productId: string) {

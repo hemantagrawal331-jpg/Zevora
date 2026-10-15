@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { CatalogueShell } from "@/components/admin/catalogue-shell";
 import { formatPrice } from "@/lib/format";
+import { fulfilmentLabels, fulfilmentStatuses, isFulfilmentStatus } from "@/lib/commerce/order-states";
 import { adminDenialMessage, requireCatalogueAdmin } from "@/lib/commerce/session";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
@@ -21,19 +22,21 @@ async function OrdersAdmin({ searchParams }: { searchParams: Promise<{ q?: strin
   const query = (params.q ?? "").trim().slice(0, 80);
   const supabase = await createSupabaseServer();
   if (!supabase) return <CatalogueShell title="Orders"><p className="mt-6 text-sm">Supabase is not configured.</p></CatalogueShell>;
-  let request = supabase.from("orders").select("id, status, total_in_paise, created_at, user_id").order("created_at", { ascending: false }).limit(50);
-  if (status) request = request.eq("status", status);
-  if (/^[0-9a-f-]{36}$/i.test(query)) request = request.eq("id", query);
+  let request = supabase.from("orders").select("id, reference, status, total_in_paise, created_at").order("created_at", { ascending: false }).limit(50);
+  if (status && (fulfilmentStatuses as readonly string[]).includes(status)) request = request.eq("status", status);
+  if (/^ZV[A-Z0-9]{8}$/i.test(query)) request = request.eq("reference", query.toUpperCase());
+  else if (/^[0-9a-f-]{36}$/i.test(query)) request = request.eq("id", query);
   const orders = await request;
-  const rows = (orders.data as { id: string; status: string; total_in_paise: number; created_at: string }[] | null) ?? [];
+  if (orders.error) return <CatalogueShell title="Orders"><p className="mt-6 text-sm">Orders could not be loaded. Apply the checkout migration if it has not been run.</p></CatalogueShell>;
+  const rows = (orders.data as { id: string; reference: string | null; status: string; total_in_paise: number; created_at: string }[] | null) ?? [];
   return (
     <CatalogueShell title="Orders">
       <form className="mt-8 flex flex-wrap gap-2">
-        <input name="q" defaultValue={query} placeholder="Order id" className="border border-line bg-transparent px-3 py-2" />
+        <input name="q" defaultValue={query} placeholder="Order reference" className="border border-line bg-transparent px-3 py-2" />
         <select name="status" defaultValue={status} className="border border-line bg-transparent px-3 py-2">
           <option value="">All statuses</option>
-          {["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"].map((item) => (
-            <option key={item} value={item}>{item}</option>
+          {fulfilmentStatuses.map((item) => (
+            <option key={item} value={item}>{fulfilmentLabels[item]}</option>
           ))}
         </select>
         <button className="text-[11px] tracking-[0.14em] uppercase" type="submit">Filter</button>
@@ -42,8 +45,8 @@ async function OrdersAdmin({ searchParams }: { searchParams: Promise<{ q?: strin
         {rows.map((order) => (
           <li key={order.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
             <div>
-              <Link href={`/admin/orders/${order.id}`} className="hover:underline">{order.id}</Link>
-              <p className="text-xs text-stone">{order.status} · {new Date(order.created_at).toLocaleString("en-IN")}</p>
+              <Link href={`/admin/orders/${order.id}`} className="hover:underline">{order.reference || order.id}</Link>
+              <p className="text-xs text-stone">{isFulfilmentStatus(order.status) ? fulfilmentLabels[order.status] : order.status} · {new Date(order.created_at).toLocaleString("en-IN")}</p>
             </div>
             <p>{formatPrice(order.total_in_paise)}</p>
           </li>

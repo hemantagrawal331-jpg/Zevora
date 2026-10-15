@@ -10,13 +10,13 @@ export default function TermsPage() {
   return (
     <InfoPage eyebrow="Legal" title="Terms">
       <p>
-        This website is a storefront preview for ZEVORA. Prices are shown in Indian rupees so the edit can be read as a shop. Adding a piece to the bag does not reserve it, and checkout cannot be completed.
+        Adding a piece to the bag does not reserve it. An order can be created from catalogue stock and stays unpaid until a verified payment event. Opening the confirmation page does not mark an order paid. Sample catalogue pieces cannot be ordered.
       </p>
       <p>
         Product photographs are temporary stand-ins. They are not a claim that the pictured garment was made by ZEVORA. Names describe the piece in the photograph so the layout can be reviewed.
       </p>
       <p>
-        Shipping and returns pages describe the intended policy. They are not a contract for an order, because orders cannot be placed here yet.
+        Shipping, returns, and privacy pages describe the rules used at checkout. An unpaid order is not a completed sale.
       </p>
     </InfoPage>
   );
