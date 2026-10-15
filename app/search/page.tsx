@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { CatalogueBoundary } from "@/components/catalogue-boundary";
+import { privatePageRobots } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Search",
   description: "Search clothing and accessories at ZEVORA.",
+  robots: privatePageRobots,
 };
 
 export default function SearchPage() {

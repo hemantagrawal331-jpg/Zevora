@@ -10,6 +10,21 @@ import { Newsletter } from "@/components/newsletter";
 import { CatalogSkeleton } from "@/components/skeletons";
 import { loadStorefront } from "@/lib/commerce/catalogue";
 
+import type { Metadata } from "next";
+import { publicPage } from "@/lib/seo";
+import { site } from "@/lib/site";
+
+export const metadata: Metadata = {
+  ...publicPage("/", "ZEVORA", site.description),
+  title: { absolute: "ZEVORA — Modern Clothing & Accessories" },
+  openGraph: {
+    title: "ZEVORA — Modern Clothing & Accessories",
+    description: site.description,
+    url: "/",
+    type: "website",
+  },
+};
+
 export default function HomePage() {
   return (
     <>

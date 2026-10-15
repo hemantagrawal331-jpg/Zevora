@@ -1,13 +1,10 @@
-import type { Metadata } from "next";
 import { CatalogueBoundary } from "@/components/catalogue-boundary";
 import { getCategory } from "@/lib/categories";
+import { publicPage } from "@/lib/seo";
 
 const category = getCategory("accessories");
 
-export const metadata: Metadata = {
-  title: "Accessories",
-  description: category?.description,
-};
+export const metadata = publicPage("/accessories", "Accessories", category?.description ?? "Accessories at ZEVORA.");
 
 export default function AccessoriesPage() {
   return (

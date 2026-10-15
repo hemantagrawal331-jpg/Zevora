@@ -20,7 +20,8 @@ Demo images live in `public/images`. Paths are listed in `lib/images.ts`. Produc
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 
-Bag and wishlist pieces saved in the browser stay on this device. When Supabase is configured, signed-in customers also have an account wishlist, addresses, and orders. See [docs/supabase-setup.md](docs/supabase-setup.md). Payments are not captured until a webhook secret and provider are configured. Until then the shop uses the sample catalogue if the Supabase URL and anon key are absent.
+Bag and wishlist pieces saved in the browser stay on this device. When Supabase is configured, signed-in customers also have an account wishlist, addresses, and orders. See [docs/supabase-setup.md](docs/supabase-setup.md). Razorpay checkout is described in [docs/razorpay.md](docs/razorpay.md). Deployment steps are in [docs/deployment.md](docs/deployment.md).

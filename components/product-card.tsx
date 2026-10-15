@@ -73,9 +73,10 @@ export function ProductCard({ product }: { product: Product }) {
                     aria-label={swatch.name}
                     aria-pressed={selected}
                     onClick={() => setColor(swatch.name)}
-                    className={`h-3.5 w-3.5 rounded-full border ${selected ? "border-ink ring-1 ring-ink ring-offset-2" : "border-line"}`}
-                    style={{ backgroundColor: swatch.hex }}
-                  />
+                    className={`flex h-11 w-11 items-center justify-center rounded-full border ${selected ? "border-ink" : "border-transparent"}`}
+                  >
+                    <span className={`h-3.5 w-3.5 rounded-full border ${selected ? "border-ink ring-1 ring-ink" : "border-line"}`} style={{ backgroundColor: swatch.hex }} />
+                  </button>
                 </li>
               );
             })}

@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { CatalogueBoundary } from "@/components/catalogue-boundary";
+import { publicPage } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Bestsellers",
-  description: "The most requested pieces from ZEVORA.",
-};
+export const metadata = publicPage("/bestsellers", "Bestsellers", "The most requested pieces from ZEVORA.");
 
 export default function BestsellersPage() {
   return (

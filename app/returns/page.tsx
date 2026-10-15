@@ -1,11 +1,8 @@
-import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
+import { publicPage } from "@/lib/seo";
 import { site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Returns",
-  description: "Returns and exchanges at ZEVORA.",
-};
+export const metadata = publicPage("/returns", "Returns", "Returns and exchanges at ZEVORA.");
 
 export default function ReturnsPage() {
   return (

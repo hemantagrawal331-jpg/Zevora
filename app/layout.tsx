@@ -5,7 +5,7 @@ import { AnnouncementBar } from "@/components/announcement-bar";
 import { Footer } from "@/components/footer";
 import { StoreHeader } from "@/components/store-header";
 import { HeaderFallback } from "@/components/header";
-import { site } from "@/lib/site";
+import { site, siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,12 +21,30 @@ const display = Cormorant_Garamond({
   display: "swap",
 });
 
+const url = siteUrl();
+
 export const metadata: Metadata = {
+  metadataBase: new URL(url),
   title: {
     default: "ZEVORA — Modern Clothing & Accessories",
     template: "%s — ZEVORA",
   },
   description: site.description,
+  applicationName: site.name,
+  openGraph: {
+    type: "website",
+    siteName: site.name,
+    title: "ZEVORA — Modern Clothing & Accessories",
+    description: site.description,
+    url,
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ZEVORA — Modern Clothing & Accessories",
+    description: site.description,
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

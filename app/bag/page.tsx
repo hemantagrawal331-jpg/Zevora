@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BagView } from "@/components/bag-view";
 import { getCatalogueProfile } from "@/lib/commerce/session";
+import { privatePageRobots } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Bag",
   description: "Review pieces in your ZEVORA bag.",
+  robots: privatePageRobots,
 };
 
 export default function BagPage() {

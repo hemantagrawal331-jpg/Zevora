@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
+import { publicPage } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description: "How this ZEVORA preview handles information on your device.",
-};
+export const metadata = publicPage("/privacy", "Privacy Policy", "How this ZEVORA preview handles information on your device.");
 
 export default function PrivacyPage() {
   return (

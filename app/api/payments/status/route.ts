@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { describePayment } from "@/lib/commerce/checkout-input";
 import { loadOrderForViewer } from "@/lib/commerce/load-order";
 import { reconcileRazorpayOrder } from "@/lib/commerce/razorpay-payment";
+import { rateLimit, requestIp } from "@/lib/security/rate-limit";
 
 export async function GET(request: Request) {
+  const limited = rateLimit(`status:${requestIp(request)}`, 60, 60_000);
+  if (!limited.ok) {
+    return NextResponse.json({ ok: false, message: "Too many status checks." }, { status: 429, headers: { "Retry-After": String(limited.retryAfter) } });
+  }
   const reference = new URL(request.url).searchParams.get("reference")?.trim().toUpperCase() ?? "";
   const loaded = await loadOrderForViewer(reference);
   if (!loaded || loaded.forbidden) {

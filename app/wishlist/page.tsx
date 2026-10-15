@@ -6,10 +6,12 @@ import { Container } from "@/components/container";
 import { loadStorefront } from "@/lib/commerce/catalogue";
 import { getCatalogueProfile } from "@/lib/commerce/session";
 import { createSupabaseServer } from "@/lib/supabase/server";
+import { privatePageRobots } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Wishlist",
   description: "Pieces saved from the ZEVORA edit.",
+  robots: privatePageRobots,
 };
 
 export default function WishlistPage() {

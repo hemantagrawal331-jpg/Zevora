@@ -1,3 +1,18 @@
+export function siteUrl() {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const vercel = process.env.VERCEL_URL?.trim();
+  const candidate = configured || (vercel ? `https://${vercel.replace(/^https?:\/\//, "")}` : "http://localhost:3000");
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "http://localhost:3000";
+    return url.origin;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
+
+export const privatePageRobots = { index: false, follow: false } as const;
+
 export const site = {
   name: "ZEVORA",
   description:

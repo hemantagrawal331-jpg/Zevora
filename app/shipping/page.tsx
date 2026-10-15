@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
+import { publicPage } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Shipping",
-  description: "Shipping within India from ZEVORA.",
-};
+export const metadata = publicPage("/shipping", "Shipping", "Shipping within India from ZEVORA.");
 
 export default function ShippingPage() {
   return (

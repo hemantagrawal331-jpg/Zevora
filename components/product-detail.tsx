@@ -96,7 +96,9 @@ export function ProductDetail({ product }: { product: Product }) {
           <h1 className="mt-3 font-display text-5xl leading-none md:text-6xl">{product.name}</h1>
           <Price priceInPaise={displayPrice} compareAtPriceInPaise={displayCompare} className="mt-6 text-base" />
           <p className="mt-3 text-sm text-charcoal">
-            {!anyStock
+            {product.demo
+              ? "Sample piece. It is not catalogue stock and cannot be ordered."
+              : !anyStock
               ? "Out of stock"
               : stock > 0
                 ? stock <= 3
@@ -120,9 +122,10 @@ export function ProductDetail({ product }: { product: Product }) {
                         aria-pressed={selected}
                         aria-label={swatch.name}
                         onClick={() => chooseColor(swatch.name)}
-                        className={`h-5 w-5 rounded-full border ${selected ? "border-ink ring-1 ring-ink ring-offset-2" : "border-line"}`}
-                        style={{ backgroundColor: swatch.hex }}
-                      />
+                        className={`flex h-11 w-11 items-center justify-center rounded-full border ${selected ? "border-ink" : "border-transparent"}`}
+                      >
+                        <span className={`h-5 w-5 rounded-full border ${selected ? "border-ink ring-1 ring-ink" : "border-line"}`} style={{ backgroundColor: swatch.hex }} />
+                      </button>
                     </li>
                   );
                 })}

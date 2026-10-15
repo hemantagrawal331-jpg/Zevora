@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
+import { publicPage } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "The House",
-  description: "How ZEVORA approaches clothing and accessories.",
-};
+export const metadata = publicPage("/about", "The House", "How ZEVORA approaches clothing and accessories.");
 
 export default function AboutPage() {
   return (

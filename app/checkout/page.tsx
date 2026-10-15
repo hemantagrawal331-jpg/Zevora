@@ -7,9 +7,12 @@ import { getCatalogueProfile } from "@/lib/commerce/session";
 import { isSupabaseConfigured, serviceRoleKey } from "@/lib/supabase/config";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
+import { privatePageRobots } from "@/lib/site";
+
 export const metadata: Metadata = {
   title: "Checkout",
   description: "Delivery details for a ZEVORA order. Payment is confirmed only after the server verifies Razorpay.",
+  robots: privatePageRobots,
 };
 
 export default function CheckoutPage() {

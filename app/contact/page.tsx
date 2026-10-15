@@ -1,12 +1,9 @@
-import type { Metadata } from "next";
 import { ContactForm } from "@/components/contact-form";
 import { Container } from "@/components/container";
+import { publicPage } from "@/lib/seo";
 import { site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: "Contact ZEVORA in Mumbai.",
-};
+export const metadata = publicPage("/contact", "Contact", "Contact ZEVORA in Mumbai.");
 
 export default function ContactPage() {
   return (

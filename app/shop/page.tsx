@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { CatalogueBoundary } from "@/components/catalogue-boundary";
+import { publicPage } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Shop",
-  description: "Shop menswear, womenswear, and accessories at ZEVORA.",
-};
+export const metadata = publicPage("/shop", "Shop", "Shop menswear, womenswear, and accessories at ZEVORA.");
 
 export default function ShopPage() {
   return (

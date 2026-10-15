@@ -6,10 +6,12 @@ import { OrderRecord } from "@/components/order-record";
 import { razorpayConfigured } from "@/lib/commerce/gateway";
 import { loadOrderForViewer } from "@/lib/commerce/load-order";
 import { reconcileRazorpayOrder } from "@/lib/commerce/razorpay-payment";
+import { privatePageRobots } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Order",
   description: "ZEVORA order confirmation. Payment status is shown separately from delivery.",
+  robots: privatePageRobots,
 };
 
 export default function OrderPage({ params }: { params: Promise<{ reference: string }> }) {

@@ -1,12 +1,9 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPage } from "@/components/info-page";
+import { publicPage } from "@/lib/seo";
 import { site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Customer Support",
-  description: "Help with orders, shipping, and returns at ZEVORA.",
-};
+export const metadata = publicPage("/support", "Customer Support", "Help with orders, shipping, and returns at ZEVORA.");
 
 export default function SupportPage() {
   return (

@@ -10,6 +10,8 @@ import { loadStorefront } from "@/lib/commerce/catalogue";
 import { getCategory, subcategoryLabel } from "@/lib/categories";
 import { activeProducts } from "@/lib/catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { productStructuredData, publicPage, structuredDataJson } from "@/lib/seo";
+import { siteUrl } from "@/lib/site";
 
 export function generateStaticParams() {
   if (isSupabaseConfigured()) return [];
@@ -25,7 +27,7 @@ export async function generateMetadata({
   const loaded = await loadStorefront();
   const product = loaded.products.find((item) => item.slug === slug);
   if (!product) return { title: "Piece" };
-  return { title: product.name, description: product.description };
+  return publicPage(`/product/${product.slug}`, product.name, product.description);
 }
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -45,9 +47,11 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
     .filter((item) => item.id !== product.id && item.category === product.category)
     .slice(0, 4);
   const category = getCategory(product.category);
+  const structured = productStructuredData(product, `${siteUrl()}/product/${product.slug}`);
 
   return (
     <Container className="py-8 md:py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredDataJson(structured) }} />
       {loaded.error ? <p className="mb-6 text-sm">{loaded.error}</p> : null}
       <nav aria-label="Breadcrumb" className="text-[11px] tracking-[0.14em] text-stone uppercase">
         <ol className="flex flex-wrap items-center gap-2">
